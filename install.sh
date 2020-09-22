@@ -44,7 +44,8 @@ FS_SOUNDSDIR=${FS_DIR}/sounds/en/us/callie
 WWWDIR=/var/www/html
 ASTPP_DATABASE_NAME="astpp"
 ASTPP_DB_USER="astppuser"
-
+ASTPPUSER_MYSQL_PASSWORD="nmto422vp4qsn67b"
+ASTPPUSER_MYSQL_PORT = 25060
 #################################
 ####  general functions #########
 #################################
@@ -108,7 +109,7 @@ install_prerequisties ()
 get_astpp_source ()
 {
         cd /opt
-        git clone -b v4.0.1 https://github.com/iNextrix/ASTPP.git
+        git clone -b v4.0.1 https://github.com/anishmenon/ASTPP.git
 }
 
 #License Acceptence
@@ -172,61 +173,7 @@ install_php ()
         fi 
 }
 
-#Install Mysql
-install_mysql ()
-{
-        cd /usr/src
-        if [ "$DIST" = "DEBIAN" ]; then
-                wget https://repo.mysql.com/mysql-apt-config_0.8.13-1_all.deb
-                dpkg -i mysql-apt-config_0.8.13-1_all.deb
-                apt update
-                apt -y install unixodbc unixodbc-bin
-                debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password ${MYSQL_ROOT_PASSWORD}"
-                debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password ${MYSQL_ROOT_PASSWORD}"
-                debconf-set-selections <<< "mysql-community-server mysql-server/default-auth-override select Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)"
-                DEBIAN_FRONTEND=noninteractive apt install -y mysql-server
-                wget https://cdn.mysql.com//Downloads/Connector-ODBC/8.0/mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit.tar.gz
-                tar -xzvf  mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit.tar.gz
-                cd /usr/src/mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit/
-                cp -rf lib/libmyodbc8* /usr/lib/x86_64-linux-gnu/odbc/.
-        else if [ "$DIST" = "CENTOS" ]; then
-                wget https://repo.mysql.com/mysql80-community-release-el7-1.noarch.rpm
-                yum localinstall -y mysql80-community-release-el7-1.noarch.rpm
-                yum install -y mysql-community-server unixODBC mysql-connector-odbc
-                systemctl start mysqld
-                MYSQL_ROOT_TEMP=$(grep 'temporary password' /var/log/mysqld.log | cut -c 14- | cut -c100-111 2>&1)
-                mysql -uroot -p${MYSQL_ROOT_TEMP} --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';FLUSH PRIVILEGES;"
-        fi
-        fi
-        echo ""
-        echo "MySQL password set to '${MYSQL_ROOT_PASSWORD}'. Remember to delete ~/.mysql_passwd" >> ~/.mysql_passwd
-        echo "" >>  ~/.mysql_passwd
-        echo "MySQL astppuser password:  ${ASTPPUSER_MYSQL_PASSWORD} " >>  ~/.mysql_passwd
-        chmod 400 ~/.mysql_passwd
-}
 
-#Normalize mysql installation
-normalize_mysql ()
-{
-        if [ ${DIST} = "DEBIAN" ]; then
-                cp ${ASTPP_SOURCE_DIR}/misc/odbc/deb_odbc.ini /etc/odbc.ini
-                sed -i '33i wait_timeout=600' /etc/mysql/mysql.conf.d/mysqld.cnf
-        sed -i '33i interactive_timeout = 600' /etc/mysql/mysql.conf.d/mysqld.cnf
-        sed -i '33i sql_mode=""' /etc/mysql/mysql.conf.d/mysqld.cnf
-        systemctl restart mysql
-                systemctl enable mysql
-        elif  [ ${DIST} = "CENTOS" ]; then
-                systemctl start mysqld
-                systemctl enable mysqld
-                cp ${ASTPP_SOURCE_DIR}/misc/odbc/cent_odbc.ini /etc/odbc.ini
-                sed -i '26i wait_timeout=600' /etc/my.cnf
-        sed -i '26i interactive_timeout = 600' /etc/my.cnf
-        sed -i '26i sql-mode=""' /etc/my.cnf
-
-        systemctl restart mysqld
-                systemctl enable mysqld
-        fi
-}
 
 #User Response Gathering
 get_user_response ()
@@ -398,6 +345,8 @@ normalize_freeswitch ()
                 /usr/bin/systemctl enable freeswitch
         fi
 }
+
+ASTPPUSER_MYSQL_PASSWORD = 
 
 #Install Database for ASTPP
 install_database ()
