@@ -346,7 +346,6 @@ normalize_freeswitch ()
         fi
 }
 
-ASTPPUSER_MYSQL_PASSWORD = 
 
 #Install Database for ASTPP
 install_database ()
